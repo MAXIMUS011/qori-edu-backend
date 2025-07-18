@@ -5,16 +5,37 @@ const mongoose = require('mongoose');
 const cors = require('cors'); // Para permitir peticiones desde el frontend
 const bcrypt = require('bcryptjs'); // Necesario para el hashing de contraseñas
 const jwt = require('jsonwebtoken'); // Necesario para la autenticación JWT
-const connectDB = require('./config/db');
 
 const app = express();
-const PORT = process.env.PORT || 5000; // Asegúrate de que este puerto coincida con el frontend
+// El puerto se toma de la variable de entorno PORT (proporcionada por Azure App Service)
+// o por defecto 5000 para desarrollo local.
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors()); // Habilitar CORS para todas las rutas
+// Configuración de CORS:
+// Actualmente, `app.use(cors());` permite todas las solicitudes de cualquier origen.
+// Para un entorno de producción, es una buena práctica restringir esto a los orígenes específicos
+// desde los que esperas que tu aplicación móvil o web se conecte.
+// Por ejemplo:
+// app.use(cors({
+//     origin: ['https://tudominio.com', 'exp://tu-expo-app.com'], // Reemplaza con tus dominios/URLs
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//     credentials: true,
+//     optionsSuccessStatus: 204
+// }));
+app.use(cors()); // Habilitar CORS para todas las rutas (para desarrollo y despliegue inicial)
 app.use(express.json()); // Para parsear el body de las peticiones en formato JSON
 
-connectDB();
+// Conexión a la base de datos MongoDB
+// Se utiliza la variable de entorno MONGODB_URI, que debe configurarse en Azure App Service
+// con la cadena de conexión de tu MongoDB Atlas.
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Conectado a MongoDB Atlas'))
+    .catch(err => {
+        console.error('Error al conectar a MongoDB:', err);
+        process.exit(1); // Salir del proceso si hay un error de conexión a la DB
+    });
+
 // --- Modelos de Mongoose (Importaciones) ---
 const User = require('./models/User');
 const Institution = require('./models/Institution');
@@ -61,6 +82,7 @@ const authorize = (...roles) => {
 
 // --- Rutas de la API ---
 
+// Ruta raíz para verificar que el servidor está funcionando
 app.get('/', (req, res) => {
     res.send('API de Qori-Edu funcionando!');
 });
