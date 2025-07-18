@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors'); // Para permitir peticiones desde el frontend
 const bcrypt = require('bcryptjs'); // Necesario para el hashing de contraseñas
 const jwt = require('jsonwebtoken'); // Necesario para la autenticación JWT
+const connectDB = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 5000; // Asegúrate de que este puerto coincida con el frontend
@@ -13,14 +14,7 @@ const PORT = process.env.PORT || 5000; // Asegúrate de que este puerto coincida
 app.use(cors()); // Habilitar CORS para todas las rutas
 app.use(express.json()); // Para parsear el body de las peticiones en formato JSON
 
-// Conexión a la base de datos MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Conectado a MongoDB Atlas'))
-    .catch(err => {
-        console.error('Error al conectar a MongoDB:', err);
-        process.exit(1); // Salir del proceso si hay un error de conexión a la DB
-    });
-
+connectDB();
 // --- Modelos de Mongoose (Importaciones) ---
 const User = require('./models/User');
 const Institution = require('./models/Institution');
