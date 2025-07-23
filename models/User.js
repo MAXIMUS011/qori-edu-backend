@@ -45,12 +45,21 @@ const UserSchema = new mongoose.Schema({
         // unique: true, // Si quieres que los emails sean únicos
         // sparse: true // Usar con unique para permitir múltiples documentos sin email
     },
-    // Campos específicos para profesor
+    // --- CAMBIOS IMPORTANTES AQUÍ ---
+    // Ahora 'course', 'grade' y 'section' son siempre arrays de Strings
     course: {
-        type: String, // Asumiendo que el curso es un String como "Física", "Matemáticas"
-        trim: true,
-        required: function() { return this.userType === 'profesor'; } // Solo obligatorio si es profesor
+        type: [String], // Cambiado a array de Strings
+        default: [],    // Valor por defecto como array vacío
     },
+    grade: {
+        type: [String], // Cambiado a array de Strings
+        default: [],    // Valor por defecto como array vacío
+    },
+    section: {
+        type: [String], // Cambiado a array de Strings
+        default: [],    // Valor por defecto como array vacío
+    },
+    // --- FIN DE CAMBIOS IMPORTANTES ---
     // Campo para comisiones (para profesores y estudiantes)
     commissions: [{ // Array de ObjectIds que referencian a la colección 'Commission'
         type: mongoose.Schema.Types.ObjectId,
@@ -61,25 +70,15 @@ const UserSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tutoria',
     }],
-    // Campos específicos para estudiante
-    grade: {
-        type: String, // Ej. "1ro", "2do"
-        trim: true,
-        required: function() { return this.userType === 'estudiante'; }
-    },
-    section: {
-        type: String, // Ej. "A", "B"
-        trim: true,
-        required: function() { return this.userType === 'estudiante'; }
-    }
 }, {
     timestamps: true // Añade createdAt y updatedAt para saber cuándo fue creado/modificado
 });
 
 // Hash de la contraseña antes de guardar
 UserSchema.pre('save', async function (next) {
+    // Solo hashear si la contraseña ha sido modificada o es nueva
     if (!this.isModified('password')) {
-        return next(); // Usa 'return next()' para asegurar que la función se detenga
+        return next();
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -92,3 +91,4 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 module.exports = mongoose.model('User', UserSchema);
+
